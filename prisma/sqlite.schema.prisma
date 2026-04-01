@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Map {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  imageUrl    String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("maps")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("tags")
+}
+
+model LineupPosition {
+  id          String   @id @default(cuid())
+  name        String
+  mapId       String
+  imageUrl    String?
+  positionX   Float
+  positionY   Float
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([mapId])
+  @@map("lineup_positions")
+}
+
+model User {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  username         String   @unique
+  password         String
+  avatar           String?
+  role             String   @default("user")
+  banned           Boolean  @default(false)
+  banReason        String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  referredByUserId String?
+
+  @@map("users")
+}
+
+model Lineup {
+  id               String   @id @default(cuid())
+  title            String
+  description      String?
+  mapId            String
+  positionId       String?
+  grenadeType      String
+  side             String
+  videoPath        String?
+  youtubeId        String?
+  thumbnailUrl     String?
+  throwPosition    String?
+  steps            String?
+  difficulty       String   @default("MEDIUM")
+  views            Int      @default(0)
+  isUserGenerated  Boolean  @default(false)
+  isPremium        Boolean  @default(false)
+  moderationStatus String   @default("PENDING")
+  rejectionReason  String?
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  userId           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([mapId])
+  @@index([userId])
+  @@map("lineups")
+}
+
+model LineupTag {
+  lineupId String
+  tagId    String
+
+  @@unique([lineupId, tagId])
+  @@map("lineup_tags")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  lineupId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([lineupId])
+  @@map("comments")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  lineupId  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, lineupId])
+  @@map("favorites")
+}
+
+model TacticalRound {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  mapId        String
+  side         String
+  videoPath    String?
+  youtubeId    String?
+  thumbnailUrl String?
+  steps        String?
+  views        Int      @default(0)
+  isPremium    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([mapId])
+  @@map("tactical_rounds")
+}
+
+model SecretGrenade {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  mapId         String
+  grenadeType   String
+  side          String
+  videoPath     String?
+  youtubeId     String?
+  thumbnailUrl  String?
+  throwPosition String?
+  steps         String?
+  views         Int      @default(0)
+  isPremium     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([mapId])
+  @@map("secret_grenades")
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800">
+  <rect fill="#1f2937" width="800" height="800"/>
+  <rect fill="#374151" x="100" y="100" width="600" height="600" rx="20"/>
+  <rect fill="#4b5563" x="150" y="150" width="500" height="500" rx="10"/>
+  <circle fill="#f59e0b" cx="300" cy="300" r="40"/>
+  <text fill="#ffffff" x="300" y="305" text-anchor="middle" font-size="14" font-weight="bold">A</text>
+  <circle fill="#f59e0b" cx="500" cy="500" r="40"/>
+  <text fill="#ffffff" x="500" y="505" text-anchor="middle" font-size="14" font-weight="bold">B</text>
+  <text fill="#ffffff" x="400" y="50" text-anchor="middle" font-size="24" font-weight="bold">ANCIENT</text>
+  <text fill="#9ca3af" x="400" y="780" text-anchor="middle" font-size="14">Overview Map</text>
+</svg>
