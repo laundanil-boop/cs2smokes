@@ -509,13 +509,7 @@ function UploadContent() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {videoPreview ? (
-                <video
-                  src={videoPreview}
-                  controls
-                  className="w-full rounded-lg"
-                />
-              ) : youtubePreview ? (
+              {youtubePreview ? (
                 <div className="aspect-video rounded-lg overflow-hidden bg-black">
                   <img
                     src={`https://img.youtube.com/vi/${youtubePreview}/mqdefault.jpg`}
@@ -526,7 +520,7 @@ function UploadContent() {
               ) : (
                 <div className="aspect-video rounded-lg bg-cs2-light flex items-center justify-center">
                   <p className="text-muted-foreground text-sm">
-                    Загрузите видео для предпросмотра
+                    Укажите YouTube ссылку для предпросмотра
                   </p>
                 </div>
               )}
