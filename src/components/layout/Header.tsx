@@ -116,7 +116,7 @@ export function Header() {
                 <Link href="/admin">
                   <Button variant="destructive" size="sm" className="hidden lg:flex gap-2 h-9">
                     <Settings className="h-4 w-4" />
-                    Админ
+                    ADMIN
                   </Button>
                 </Link>
               )}
@@ -214,7 +214,7 @@ export function Header() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Settings className="h-5 w-5" />
-                      Админ панель
+                      ADMIN
                     </Link>
                   )}
                   {user.role === 'media' && (

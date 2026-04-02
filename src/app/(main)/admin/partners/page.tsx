@@ -68,6 +68,7 @@ export default function AdminPartnersPage() {
   // Подсчет общей статистики
   const totalReferralUses = referrals.reduce((sum, r) => sum + (r.usesCount || 0), 0)
   const totalBloggerUses = bloggerPromoCodes.reduce((sum, pc) => sum + (pc._count?.usages || pc.usedCount), 0)
+  const totalActivations = totalReferralUses + totalBloggerUses
 
   if (loading) {
     return (
@@ -95,13 +96,13 @@ export default function AdminPartnersPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Всего рефералов</CardTitle>
+            <CardTitle className="text-sm font-medium">Всего активаций</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalReferralUses}</div>
+            <div className="text-2xl font-bold">{totalActivations}</div>
             <p className="text-xs text-muted-foreground">
-              Приглашено пользователей
+              Рефералы + промокоды блогеров
             </p>
           </CardContent>
         </Card>
