@@ -107,6 +107,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/guides" className="text-muted-foreground hover:text-cs2-accent transition-colors">
+                  Гайды
+                </Link>
+              </li>
+              <li>
                 <Link href="/privacy" className="text-muted-foreground hover:text-cs2-accent transition-colors">
                   Политика конфиденциальности
                 </Link>
@@ -117,9 +122,9 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-cs2-accent transition-colors">
+                <a href="mailto:cs2smokes@mail.ru" className="text-muted-foreground hover:text-cs2-accent transition-colors">
                   Контакты
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

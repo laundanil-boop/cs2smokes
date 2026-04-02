@@ -121,11 +121,6 @@ export default function PremiumTab() {
                 Оформить подписку
               </Button>
             </CardContent>
-            <CardFooter className="justify-center">
-              <p className="text-sm text-muted-foreground">
-                cs2smokes@mail.ru
-              </p>
-            </CardFooter>
           </Card>
         </div>
       )}
