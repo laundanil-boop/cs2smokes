@@ -31,8 +31,7 @@ const lineupSchema = z.object({
   positionId: z.string().optional(),
   grenadeType: z.enum(['SMOKE', 'MOLOTOV', 'FLASH', 'HE']),
   side: z.enum(['CT', 'T', 'BOTH']),
-  youtubeId: z.string().optional(),
-  videoPath: z.string().optional(),
+  youtubeId: z.string().min(1, 'YouTube ссылка обязательна'),
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
   throwPosition: z.object({
     x: z.coerce.number().optional(),
@@ -58,9 +57,6 @@ function UploadContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [youtubePreview, setYoutubePreview] = useState('')
-  const [videoFile, setVideoFile] = useState<File | null>(null)
-  const [videoPreview, setVideoPreview] = useState('')
-  const [uploadingVideo, setUploadingVideo] = useState(false)
 
   const {
     register,
@@ -148,34 +144,9 @@ function UploadContent() {
       setLoading(true)
       setError('')
 
-      // Сначала загружаем видеофайл если он есть
-      let videoPath = data.videoPath
-      if (videoFile) {
-        setUploadingVideo(true)
-        const formData = new FormData()
-        formData.append('video', videoFile)
-
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        })
-
-        const uploadResult = await uploadResponse.json()
-
-        if (!uploadResult.success) {
-          setError(uploadResult.error || 'Ошибка при загрузке видео')
-          setLoading(false)
-          setUploadingVideo(false)
-          return
-        }
-
-        videoPath = uploadResult.data.videoPath
-        setUploadingVideo(false)
-      }
-
-      // Проверяем что есть либо видеофайл либо YouTube ID
-      if (!videoPath && !data.youtubeId) {
-        setError('Загрузите видеофайл или укажите YouTube ссылку')
+      // Проверяем что есть YouTube ID
+      if (!data.youtubeId) {
+        setError('Укажите YouTube ссылку на видео')
         setLoading(false)
         return
       }
@@ -185,7 +156,6 @@ function UploadContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          videoPath,
           isUserGenerated: true, // Пользовательский лайнап
         }),
       })
@@ -198,30 +168,10 @@ function UploadContent() {
         setError(result.error || 'Ошибка при загрузке лайнапа')
       }
     } catch (err) {
+      console.error('Submit error:', err)
       setError('Произошла ошибка. Попробуйте позже.')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const allowedTypes = ['video/mp4', 'video/webm', 'video/ogg']
-      if (!allowedTypes.includes(file.type)) {
-        setError('Недопустимый формат видео. Разрешены: MP4, WebM, OGG')
-        return
-      }
-      
-      const maxSize = 100 * 1024 * 1024
-      if (file.size > maxSize) {
-        setError('Файл слишком большой. Максимум 100MB')
-        return
-      }
-
-      setVideoFile(file)
-      setVideoPreview(URL.createObjectURL(file))
-      setError('')
     }
   }
 
@@ -407,83 +357,21 @@ function UploadContent() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">
-                    Видео *
-                  </label>
-                  <div className="border-2 border-dashed border-cs2-light rounded-lg p-6 text-center hover:border-cs2-orange transition-colors">
-                    <input
-                      type="file"
-                      id="video"
-                      accept="video/mp4,video/webm,video/ogg"
-                      onChange={handleVideoChange}
-                      disabled={loading || uploadingVideo}
-                      className="hidden"
-                    />
-                    <label htmlFor="video" className="cursor-pointer">
-                      {videoPreview ? (
-                        <div className="space-y-2">
-                          <video
-                            src={videoPreview}
-                            controls
-                            className="max-h-48 mx-auto rounded-lg"
-                          />
-                          <p className="text-sm text-muted-foreground">
-                            {videoFile?.name}
-                          </p>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setVideoFile(null)
-                              setVideoPreview('')
-                            }}
-                            disabled={loading}
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Удалить
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="w-12 h-12 mx-auto rounded-full bg-cs2-light flex items-center justify-center">
-                            <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">
-                              Нажмите для загрузки или перетащите файл
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              MP4, WebM, OGG (макс. 100MB)
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </label>
-                  </div>
-                  {errors.videoPath && (
-                    <p className="text-sm text-destructive">{errors.videoPath.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
                   <label htmlFor="youtubeId" className="text-sm font-medium">
-                    YouTube ID или ссылка (опционально)
+                    YouTube ссылка *
                   </label>
                   <Input
                     id="youtubeId"
-                    placeholder="dQw4w9WgXcQ или https://youtube.com/watch?v=..."
+                    placeholder="https://youtube.com/watch?v=..."
                     {...register('youtubeId')}
-                    disabled={loading || !!videoFile}
+                    disabled={loading}
                   />
                   {errors.youtubeId && (
                     <p className="text-sm text-destructive">{errors.youtubeId.message}</p>
                   )}
                   {youtubePreview && (
                     <p className="text-sm text-muted-foreground">
-                      Распознанный ID: {youtubePreview}
+                      ID: {youtubePreview}
                     </p>
                   )}
                 </div>
