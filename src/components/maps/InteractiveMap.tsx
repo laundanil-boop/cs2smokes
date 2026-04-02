@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import Image from 'next/image'
 import { LineupPosition, Lineup } from '@/types'
 import { Cloud, Flame, Sun, Bomb } from 'lucide-react'
 
@@ -58,14 +57,12 @@ export default function InteractiveMap({
         ref={mapContainerRef}
         className="absolute inset-0 rounded-lg overflow-hidden shadow-2xl border-2 border-gray-700 bg-gray-900"
       >
-        <Image
-          src={mapImage || '/minimaps/placeholder.png'}
+        <img
+          src={mapImage || '/minimaps/placeholder.svg'}
           alt={`${mapName} map`}
-          fill
-          className="object-cover"
-          unoptimized
+          className="w-full h-full object-cover"
           onError={(e) => {
-            console.log('Image load error:', e)
+            console.log('Image load error for:', e.currentTarget.src)
             e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="800" height="800"%3E%3Crect fill="%231f2937" width="800" height="800"/%3E%3Ctext fill="%236b7280" x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle"%3ENo Map Image%3C/text%3E%3C/svg%3E'
           }}
         />
