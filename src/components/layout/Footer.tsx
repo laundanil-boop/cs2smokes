@@ -107,11 +107,6 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/guides" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Гайды
-                </Link>
-              </li>
-              <li>
                 <Link href="/privacy" className="text-muted-foreground hover:text-cs2-accent transition-colors">
                   Политика конфиденциальности
                 </Link>

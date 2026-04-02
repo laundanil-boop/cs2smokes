@@ -123,7 +123,7 @@ export default function PremiumTab() {
             </CardContent>
             <CardFooter className="justify-center">
               <p className="text-sm text-muted-foreground">
-                Отмена в любое время
+                cs2smokes@mail.ru
               </p>
             </CardFooter>
           </Card>
