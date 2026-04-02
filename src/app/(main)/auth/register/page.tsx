@@ -94,9 +94,10 @@ function RegisterContent() {
           await refreshUser()
           // Отправляем событие для Header
           window.dispatchEvent(new CustomEvent('auth-change'))
-          // Полное обновление страницы для обновления серверных компонентов
-          router.refresh()
-          router.push('/')
+          // Перенаправляем на главную
+          window.location.href = '/'
+        } else {
+          setError('Ошибка входа после регистрации')
         }
       } else {
         setError(result.error || 'Ошибка регистрации')
