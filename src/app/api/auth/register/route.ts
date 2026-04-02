@@ -160,7 +160,6 @@ export async function POST(request: NextRequest) {
             data: {
               promoCodeId: bloggerPromoCode.id,
               userId: user.id,
-              username: user.username,
             },
           })
         }
