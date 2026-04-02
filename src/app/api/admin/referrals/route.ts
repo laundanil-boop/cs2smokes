@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const currentUser = await getCurrentUser()
 
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'moderator')) {
+    if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'root' && currentUser.role !== 'media')) {
       return NextResponse.json(
         { success: false, error: 'Not authorized' },
         { status: 403 }

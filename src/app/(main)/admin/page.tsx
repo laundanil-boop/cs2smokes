@@ -199,6 +199,26 @@ export default function AdminPage() {
             </CardContent>
           </Card>
         </Link>
+
+        {/* Media */}
+        <Link href="/media">
+          <Card className="bg-cs2-gray border-cs2-light overflow-hidden hover:border-pink-500 transition-colors">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-12 w-12 rounded-lg bg-pink-500/20 flex items-center justify-center">
+                  <Mic className="w-6 h-6 text-pink-400" />
+                </div>
+                <h3 className="text-xl font-semibold">Media</h3>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Партнерская программа для медиа
+              </p>
+              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold" variant="default" size="sm">
+                Управление
+              </Button>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <h2 className="text-2xl font-bold mb-4 mt-8">Обратная связь</h2>
