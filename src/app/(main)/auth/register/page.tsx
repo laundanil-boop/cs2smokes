@@ -84,7 +84,7 @@ function RegisterContent() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: data.email,
+            emailOrUsername: data.email,
             password: data.password,
           }),
         })
@@ -97,7 +97,9 @@ function RegisterContent() {
           // Перенаправляем на главную
           window.location.href = '/'
         } else {
-          setError('Ошибка входа после регистрации')
+          const loginError = await loginResponse.json()
+          console.error('Login error after registration:', loginError)
+          setError('Ошибка входа после регистрации: ' + (loginError.error || 'Неизвестная ошибка'))
         }
       } else {
         setError(result.error || 'Ошибка регистрации')
