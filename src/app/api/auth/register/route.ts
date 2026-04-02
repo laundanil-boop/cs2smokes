@@ -46,12 +46,24 @@ export async function POST(request: NextRequest) {
 
     // Find referral if code provided
     let referredByUserId: string | null = null
+    let bloggerPromoCodeUsed: string | null = null
+    
     if (refCode) {
-      const referral = await prisma.referral.findUnique({
+      // Сначала проверяем как промокод блогера
+      const bloggerPromoCode = await prisma.bloggerPromoCode.findUnique({
         where: { code: refCode },
       })
-      if (referral) {
-        referredByUserId = referral.userId
+      
+      if (bloggerPromoCode) {
+        bloggerPromoCodeUsed = bloggerPromoCode.code
+      } else {
+        // Если не промокод блогера, проверяем как реферальный код
+        const referral = await prisma.referral.findUnique({
+          where: { code: refCode },
+        })
+        if (referral) {
+          referredByUserId = referral.userId
+        }
       }
     }
 
@@ -112,6 +124,47 @@ export async function POST(request: NextRequest) {
           expiresAt,
         },
       })
+    }
+
+    // If blogger promo code used, activate it
+    if (bloggerPromoCodeUsed) {
+      const bloggerPromoCode = await prisma.bloggerPromoCode.findUnique({
+        where: { code: bloggerPromoCodeUsed },
+      })
+
+      if (bloggerPromoCode) {
+        // Check max uses
+        if (!bloggerPromoCode.maxUses || bloggerPromoCode.usedCount < bloggerPromoCode.maxUses) {
+          // Give premium to user
+          const expiresAt = new Date()
+          expiresAt.setDate(expiresAt.getDate() + bloggerPromoCode.days)
+
+          await prisma.premiumSubscription.create({
+            data: {
+              userId: user.id,
+              isActive: true,
+              expiresAt,
+            },
+          })
+
+          // Update usage count
+          await prisma.bloggerPromoCode.update({
+            where: { code: bloggerPromoCodeUsed },
+            data: {
+              usedCount: { increment: 1 },
+            },
+          })
+
+          // Create usage record
+          await prisma.bloggerPromoCodeUsage.create({
+            data: {
+              promoCodeId: bloggerPromoCode.id,
+              userId: user.id,
+              username: user.username,
+            },
+          })
+        }
+      }
     }
 
     return NextResponse.json(

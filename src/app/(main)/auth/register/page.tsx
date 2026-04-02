@@ -94,6 +94,8 @@ function RegisterContent() {
           await refreshUser()
           // Отправляем событие для Header
           window.dispatchEvent(new CustomEvent('auth-change'))
+          // Полное обновление страницы для обновления серверных компонентов
+          router.refresh()
           router.push('/')
         }
       } else {
@@ -185,18 +187,18 @@ function RegisterContent() {
 
             <div className="space-y-2">
               <label htmlFor="refCode" className="text-sm font-medium">
-                Реферальный код (необязательно)
+                Промокод блогера (необязательно)
               </label>
               <Input
                 id="refCode"
                 type="text"
-                placeholder="REF12345678"
+                placeholder="BLOGGER"
                 value={refCode}
                 onChange={(e) => setRefCode(e.target.value.toUpperCase())}
                 disabled={loading}
               />
               <p className="text-xs text-muted-foreground">
-                Если вас пригласили, введите код для получения бонуса
+                Введите промокод блогера для получения Premium
               </p>
             </div>
           </CardContent>

@@ -24,7 +24,6 @@ function ProfileContent() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'lineups' | 'favorites' | 'premium' | 'settings'>('lineups')
   const [promoCode, setPromoCode] = useState('')
-  const [bloggerCode, setBloggerCode] = useState('')
   const [activating, setActivating] = useState(false)
 
   useEffect(() => {
@@ -119,40 +118,6 @@ function ProfileContent() {
     }
   }
 
-  const handleActivateBloggerCode = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!bloggerCode.trim()) return
-
-    setActivating(true)
-    try {
-      const response = await fetch('/api/promo/blogger/activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: bloggerCode.trim() }),
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        toast.success(result.message)
-        setBloggerCode('')
-        // Обновляем данные пользователя
-        const userResponse = await fetch('/api/auth/me')
-        const userResult = await userResponse.json()
-        if (userResult.success) {
-          setUser(userResult.data)
-        }
-      } else {
-        toast.error(result.error || 'Ошибка активации')
-      }
-    } catch (error) {
-      console.error('Error activating blogger code:', error)
-      toast.error('Ошибка при активации')
-    } finally {
-      setActivating(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="container py-8 flex items-center justify-center min-h-[400px]">
@@ -219,7 +184,7 @@ function ProfileContent() {
           </div>
 
           {/* Активация промокодов */}
-          <div className="mt-6 space-y-4">
+          <div className="mt-6">
             <Card>
               <CardHeader className="py-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -240,33 +205,6 @@ function ProfileContent() {
                     size="sm"
                     className="w-full"
                     disabled={activating || !promoCode.trim()}
-                  >
-                    {activating ? 'Активация...' : 'Активировать'}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="py-3">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Mic className="h-4 w-4" />
-                  Промокод блогера
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleActivateBloggerCode} className="space-y-2">
-                  <Input
-                    placeholder="Код от блогера"
-                    value={bloggerCode}
-                    onChange={(e) => setBloggerCode(e.target.value.toUpperCase())}
-                    disabled={activating}
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className="w-full"
-                    disabled={activating || !bloggerCode.trim()}
                   >
                     {activating ? 'Активация...' : 'Активировать'}
                   </Button>
