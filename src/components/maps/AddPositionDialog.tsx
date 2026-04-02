@@ -95,7 +95,7 @@ export default function AddPositionDialog({
     setPosition(null)
   }
 
-  const mapImageUrl = map.imageUrl || `/maps/${map.name}_overview.jpg`
+  const mapImageUrl = map.imageUrl || `/minimaps/${map.name}.png`
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

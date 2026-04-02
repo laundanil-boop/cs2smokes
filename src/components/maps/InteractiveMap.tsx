@@ -59,7 +59,7 @@ export default function InteractiveMap({
         className="absolute inset-0 rounded-lg overflow-hidden shadow-2xl border-2 border-gray-700 bg-gray-900"
       >
         <Image
-          src={mapImage || '/maps/overview.jpg'}
+          src={mapImage || '/minimaps/placeholder.png'}
           alt={`${mapName} map`}
           fill
           className="object-cover"

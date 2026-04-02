@@ -110,7 +110,7 @@ export default function MapPage() {
   }
 
   // Получаем изображение карты для мини-карты
-  const mapImageUrl = map.imageUrl || `/maps/${map.name}_overview.jpg`
+  const mapImageUrl = map.imageUrl || `/minimaps/${map.name}.png`
 
   return (
     <div className="container py-8">
