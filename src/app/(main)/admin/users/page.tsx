@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Loader2, Ban, CheckCircle, Shield, Trash2, Edit, Search, Users, FileText, MessageSquare } from 'lucide-react'
+import { Loader2, Ban, CheckCircle, Shield, Trash2, Edit, Search, Users, FileText, MessageSquare, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -41,7 +41,7 @@ export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  
+
   const [banDialogOpen, setBanDialogOpen] = useState(false)
   const [userToBan, setUserToBan] = useState<User | null>(null)
   const [banReason, setBanReason] = useState('')
@@ -51,6 +51,8 @@ export default function AdminUsersPage() {
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
   const [newRole, setNewRole] = useState<string>('user')
   const [editing, setEditing] = useState(false)
+  
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -78,20 +80,32 @@ export default function AdminUsersPage() {
       const response = await fetch(`/api/admin/users/${userToBan.id}/ban`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           banned: !userToBan.banned,
-          reason: banReason 
+          reason: banReason
         }),
       })
       const result = await response.json()
       if (result.success) {
+        setMessage({ 
+          type: 'success', 
+          text: userToBan.banned 
+            ? `Пользователь ${userToBan.username} разбанен` 
+            : `Пользователь ${userToBan.username} забанен` 
+        })
+        setTimeout(() => setMessage(null), 5000)
         await fetchUsers()
         setBanDialogOpen(false)
         setUserToBan(null)
         setBanReason('')
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Ошибка при изменении статуса' })
+        setTimeout(() => setMessage(null), 5000)
       }
     } catch (error) {
       console.error('Error banning user:', error)
+      setMessage({ type: 'error', text: 'Произошла ошибка. Попробуйте позже.' })
+      setTimeout(() => setMessage(null), 5000)
     } finally {
       setBanning(false)
     }
@@ -101,19 +115,34 @@ export default function AdminUsersPage() {
     if (!userToEdit) return
     setEditing(true)
     try {
-      const response = await fetch(`/api/admin/users/${userToEdit.id}/role`, {
+      const url = `/api/admin/users/${userToEdit.id}/role`
+      console.log('[ROLE] Sending request to:', url)
+      console.log('[ROLE] User role:', userToEdit.role, 'New role:', newRole)
+      
+      const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: newRole }),
       })
+      
+      console.log('[ROLE] Response status:', response.status, response.statusText)
       const result = await response.json()
+      console.log('[ROLE] Response data:', result)
+      
       if (result.success) {
+        setMessage({ type: 'success', text: `Роль пользователя ${userToEdit.username} изменена на ${newRole}` })
         await fetchUsers()
         setEditRoleDialogOpen(false)
         setUserToEdit(null)
+        setTimeout(() => setMessage(null), 5000)
+      } else {
+        setMessage({ type: 'error', text: result.error || 'Ошибка при изменении роли' })
+        setTimeout(() => setMessage(null), 5000)
       }
     } catch (error) {
-      console.error('Error updating role:', error)
+      console.error('[ROLE] Error:', error)
+      setMessage({ type: 'error', text: `Ошибка: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}` })
+      setTimeout(() => setMessage(null), 5000)
     } finally {
       setEditing(false)
     }
@@ -158,6 +187,23 @@ export default function AdminUsersPage() {
         </p>
       </div>
 
+      {/* Сообщение об успехе/ошибке */}
+      {message && (
+        <div className={cn(
+          "mb-6 p-4 rounded-lg border flex items-center gap-3",
+          message.type === 'success' 
+            ? "bg-green-500/10 border-green-500/20 text-green-400" 
+            : "bg-red-500/10 border-red-500/20 text-red-400"
+        )}>
+          {message.type === 'success' ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <AlertCircle className="w-5 h-5" />
+          )}
+          <span>{message.text}</span>
+        </div>
+      )}
+
       {/* Фильтры */}
       <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -184,6 +230,7 @@ export default function AdminUsersPage() {
                 <SelectItem value="user">User</SelectItem>
                 <SelectItem value="moderator">Moderator</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="media">Media</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -237,6 +284,7 @@ export default function AdminUsersPage() {
                       "px-2 py-1 rounded text-xs font-medium",
                       user.role === 'admin' ? 'bg-blue-500/20 text-blue-400' :
                       user.role === 'moderator' ? 'bg-green-500/20 text-green-400' :
+                      user.role === 'media' ? 'bg-pink-500/20 text-pink-400' :
                       'bg-gray-500/20 text-gray-400'
                     )}>
                       {user.role}
@@ -361,6 +409,7 @@ export default function AdminUsersPage() {
                   <SelectItem value="user">User</SelectItem>
                   <SelectItem value="moderator">Moderator</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="media">Media</SelectItem>
                 </SelectContent>
               </Select>
             </div>
