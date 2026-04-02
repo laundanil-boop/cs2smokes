@@ -6,7 +6,8 @@ import { existsSync } from 'fs'
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
-    const file = formData.get('file') as File
+    // Поддерживаем оба имени: 'file' и 'video'
+    const file = formData.get('video') as File || formData.get('file') as File
 
     if (!file) {
       return NextResponse.json(
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes)
 
     const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'maps')
+    const uploadDir = join(process.cwd(), 'public', 'uploads', 'videos')
 
     if (!existsSync(uploadDir)) {
       await mkdir(uploadDir, { recursive: true })
@@ -28,11 +29,11 @@ export async function POST(request: NextRequest) {
     const filepath = join(uploadDir, filename)
     await writeFile(filepath, buffer)
 
-    const publicPath = `/uploads/maps/${filename}`
+    const publicPath = `/uploads/videos/${filename}`
 
     return NextResponse.json({
       success: true,
-      path: publicPath,
+      videoPath: publicPath,
     })
   } catch (error) {
     console.error('Upload error:', error)
