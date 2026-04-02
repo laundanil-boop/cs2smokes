@@ -6,41 +6,6 @@ interface RouteParams {
   params: { id: string }
 }
 
-// POST /api/admin/users/[id]/ban - Бан/разбан пользователя
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
-    const user = await getCurrentUser()
-    if (!user || (user.role !== 'admin' && user.role !== 'root')) {
-      return NextResponse.json(
-        { success: false, error: 'Доступ запрещён' },
-        { status: 403 }
-      )
-    }
-
-    const body = await request.json()
-    const { banned, reason } = body
-
-    const updatedUser = await prisma.user.update({
-      where: { id: params.id },
-      data: {
-        banned,
-        banReason: banned ? reason : null,
-      },
-    })
-
-    return NextResponse.json({ success: true, data: updatedUser })
-  } catch (error) {
-    console.error('Error banning user:', error)
-    return NextResponse.json(
-      { success: false, error: 'Ошибка при изменении статуса пользователя' },
-      { status: 500 }
-    )
-  }
-}
-
 // PATCH /api/admin/users/[id]/role - Изменение роли
 export async function PATCH(
   request: NextRequest,
@@ -48,8 +13,6 @@ export async function PATCH(
 ) {
   try {
     const user = await getCurrentUser()
-    
-    console.log('[ROLE UPDATE] Current user:', user)
 
     if (!user) {
       return NextResponse.json(
@@ -59,7 +22,6 @@ export async function PATCH(
     }
 
     if (user.role !== 'admin' && user.role !== 'root') {
-      console.log('[ROLE UPDATE] Access denied. User role:', user.role)
       return NextResponse.json(
         { success: false, error: `Доступ запрещён. Ваша роль: ${user.role || 'не указана'}` },
         { status: 403 }
@@ -68,8 +30,6 @@ export async function PATCH(
 
     const body = await request.json()
     const { role } = body
-
-    console.log('[ROLE UPDATE] Updating user', params.id, 'to role:', role)
 
     if (!role || !['user', 'moderator', 'admin'].includes(role)) {
       return NextResponse.json(
@@ -83,15 +43,13 @@ export async function PATCH(
       data: { role },
     })
 
-    console.log('[ROLE UPDATE] Success:', updatedUser.username, '->', role)
-
     return NextResponse.json({
       success: true,
       data: updatedUser,
       message: `Роль пользователя ${updatedUser.username} изменена на ${role}`
     })
   } catch (error) {
-    console.error('[ROLE UPDATE] Error:', error)
+    console.error('Error updating role:', error)
     return NextResponse.json(
       { success: false, error: 'Ошибка при изменении роли' },
       { status: 500 }
