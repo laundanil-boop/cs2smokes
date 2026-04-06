@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import fs from 'fs'
-import path from 'path'
+import { put, del, list } from '@vercel/blob'
 
-const VIDEOS_DIR = path.join(process.cwd(), 'public', 'videos', 'lineups')
+const BLOB_DIR = 'videos/lineups'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +26,9 @@ export async function POST(request: NextRequest) {
 
     // Проверка типа файла
     const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska']
-    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|webm|mkv|avi|mov)$/i)) {
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    const allowedExts = ['mp4', 'webm', 'mkv', 'avi', 'mov']
+    if (!allowedTypes.includes(file.type) && !allowedExts.includes(ext || '')) {
       return NextResponse.json(
         { success: false, error: 'Неподдерживаемый формат видео. Используйте MP4, WebM, MKV, AVI или MOV' },
         { status: 400 }
@@ -43,24 +44,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Создаём уникальное имя файла
-    const ext = path.extname(file.name)
-    const baseName = path.basename(file.name, ext)
+    // Уникальное имя файла
+    const baseName = file.name.replace(/\.[^.]+$/, '')
       .replace(/[^a-zA-Z0-9а-яА-Я_-]/g, '_')
       .toLowerCase()
     const timestamp = Date.now()
-    const fileName = `${baseName}_${timestamp}${ext}`
-    const filePath = path.join(VIDEOS_DIR, fileName)
+    const fileName = `${BLOB_DIR}/${baseName}_${timestamp}.${ext}`
 
-    // Сохраняем файл
-    const bytes = await file.arrayBuffer()
-    fs.writeFileSync(filePath, Buffer.from(bytes))
+    // Загрузка в Vercel Blob
+    const blob = await put(fileName, file, {
+      access: 'public',
+      addRandomSuffix: false,
+    })
 
     return NextResponse.json({
       success: true,
       data: {
-        fileName,
-        url: `/videos/lineups/${fileName}`,
+        fileName: blob.pathname.split('/').pop(),
+        url: blob.url,
         size: file.size,
       },
     })

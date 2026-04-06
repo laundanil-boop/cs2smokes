@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import fs from 'fs'
-import path from 'path'
+import { list, del } from '@vercel/blob'
 
-const VIDEOS_DIR = path.join(process.cwd(), 'public', 'videos', 'lineups')
+const BLOB_DIR = 'videos/lineups'
 
 export async function GET() {
   try {
@@ -15,22 +14,14 @@ export async function GET() {
       )
     }
 
-    if (!fs.existsSync(VIDEOS_DIR)) {
-      return NextResponse.json({ success: true, data: [] })
-    }
+    const { blobs } = await list({ prefix: BLOB_DIR })
 
-    const files = fs.readdirSync(VIDEOS_DIR)
-      .filter(f => /\.(mp4|webm|mkv|avi|mov)$/i.test(f))
-      .map(f => {
-        const stats = fs.statSync(path.join(VIDEOS_DIR, f))
-        return {
-          name: f,
-          url: `/videos/lineups/${f}`,
-          size: stats.size,
-          createdAt: stats.birthtime,
-        }
-      })
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    const files = blobs.map(blob => ({
+      name: blob.pathname.split('/').pop() || blob.pathname,
+      url: blob.url,
+      size: blob.size,
+      createdAt: blob.uploadedAt,
+    }))
 
     return NextResponse.json({ success: true, data: files })
   } catch (error) {
@@ -53,27 +44,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const fileName = searchParams.get('file')
+    const url = searchParams.get('url')
 
-    if (!fileName) {
+    if (!url) {
       return NextResponse.json(
-        { success: false, error: 'Имя файла обязательно' },
+        { success: false, error: 'URL файла обязателен' },
         { status: 400 }
       )
     }
 
-    // Защита от path traversal
-    const safeName = path.basename(fileName)
-    const filePath = path.join(VIDEOS_DIR, safeName)
-
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json(
-        { success: false, error: 'Файл не найден' },
-        { status: 404 }
-      )
-    }
-
-    fs.unlinkSync(filePath)
+    await del(url)
 
     return NextResponse.json({ success: true, message: 'Видео удалено' })
   } catch (error) {

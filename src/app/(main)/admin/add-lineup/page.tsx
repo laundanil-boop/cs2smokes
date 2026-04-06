@@ -184,19 +184,19 @@ function AdminAddLineupContent() {
   }, [setValue, toast])
 
   // Удаление видео
-  const handleDeleteVideo = useCallback(async (fileName: string) => {
+  const handleDeleteVideo = useCallback(async (fileUrl: string) => {
     if (!confirm('Удалить это видео?')) return
 
     try {
-      const response = await fetch(`/api/admin/videos?file=${encodeURIComponent(fileName)}`, {
+      const response = await fetch(`/api/admin/videos?url=${encodeURIComponent(fileUrl)}`, {
         method: 'DELETE',
       })
 
       const result = await response.json()
       if (result.success) {
         toast.success('Видео удалено')
-        setVideoFiles(prev => prev.filter(f => f.name !== fileName))
-        if (selectedVideo.includes(fileName)) {
+        setVideoFiles(prev => prev.filter(f => f.url !== fileUrl))
+        if (selectedVideo === fileUrl) {
           setSelectedVideo('')
           setValue('videoPath', '')
         }
