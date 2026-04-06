@@ -72,7 +72,6 @@ function AdminAddLineupContent() {
     defaultValues: {
       difficulty: 'MEDIUM',
       side: 'T',
-      videoSource: 'upload',
     },
   })
 
