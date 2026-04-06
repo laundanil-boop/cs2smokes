@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Upload, Video, Trash2, Check, X, MapPin } from 'lucide-react'
+import { Loader2, Video, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -34,20 +34,11 @@ const lineupSchema = z.object({
   positionId: z.string().optional(),
   grenadeType: z.enum(['SMOKE', 'MOLOTOV', 'FLASH', 'HE']),
   side: z.enum(['CT', 'T', 'BOTH']),
-  videoSource: z.enum(['upload', 'existing', 'youtube']),
-  youtubeId: z.string().optional(),
-  videoPath: z.string().optional(),
+  youtubeId: z.string().min(1, 'YouTube ID обязателен'),
   difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
 })
 
 type LineupForm = z.infer<typeof lineupSchema>
-
-interface VideoFile {
-  name: string
-  url: string
-  size: number
-  createdAt: string
-}
 
 export default function AdminAddLineupPage() {
   return (
@@ -68,10 +59,6 @@ function AdminAddLineupContent() {
   const [positions, setPositions] = useState<LineupPosition[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedMap, setSelectedMap] = useState<GameMap | null>(null)
-  const [videoFiles, setVideoFiles] = useState<VideoFile[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [selectedVideo, setSelectedVideo] = useState<string>('')
 
   const {
     register,
@@ -90,7 +77,6 @@ function AdminAddLineupContent() {
   })
 
   const selectedMapId = watch('mapId')
-  const videoSource = watch('videoSource')
   const youtubeId = watch('youtubeId')
 
   // Загрузка карт
@@ -99,16 +85,6 @@ function AdminAddLineupContent() {
       .then(res => res.json())
       .then(result => {
         if (result.success) setMaps(result.data)
-      })
-      .catch(console.error)
-  }, [])
-
-  // Загрузка списка видео
-  useEffect(() => {
-    fetch('/api/admin/videos')
-      .then(res => res.json())
-      .then(result => {
-        if (result.success) setVideoFiles(result.data)
       })
       .catch(console.error)
   }, [])
@@ -144,106 +120,16 @@ function AdminAddLineupContent() {
     }
   }, [preselectedPositionId, setValue])
 
-  // Загрузка видео файла
-  const handleVideoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setUploading(true)
-    setUploadProgress(0)
-
-    try {
-      const formData = new FormData()
-      formData.append('video', file)
-
-      const response = await fetch('/api/admin/videos/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        toast.success('Видео загружено')
-        setSelectedVideo(result.data.url)
-        setValue('videoPath', result.data.url)
-
-        // Обновляем список
-        const listRes = await fetch('/api/admin/videos')
-        const listResult = await listRes.json()
-        if (listResult.success) setVideoFiles(listResult.data)
-      } else {
-        toast.error(result.error || 'Ошибка загрузки')
-      }
-    } catch (error) {
-      toast.error('Ошибка при загрузке видео')
-    } finally {
-      setUploading(false)
-      setUploadProgress(0)
-    }
-  }, [setValue, toast])
-
-  // Удаление видео
-  const handleDeleteVideo = useCallback(async (fileUrl: string) => {
-    if (!confirm('Удалить это видео?')) return
-
-    try {
-      const response = await fetch(`/api/admin/videos?url=${encodeURIComponent(fileUrl)}`, {
-        method: 'DELETE',
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        toast.success('Видео удалено')
-        setVideoFiles(prev => prev.filter(f => f.url !== fileUrl))
-        if (selectedVideo === fileUrl) {
-          setSelectedVideo('')
-          setValue('videoPath', '')
-        }
-      } else {
-        toast.error(result.error || 'Ошибка удаления')
-      }
-    } catch (error) {
-      toast.error('Ошибка при удалении видео')
-    }
-  }, [selectedVideo, setValue, toast])
-
   const onSubmit = async (data: LineupForm) => {
     try {
       setLoading(true)
-
-      // Определяем источник видео
-      let youtubeId: string | undefined
-      let videoPath: string | undefined
-
-      if (data.videoSource === 'youtube') {
-        if (!data.youtubeId) {
-          toast.error('Укажите YouTube ID')
-          return
-        }
-        youtubeId = data.youtubeId
-      } else if (data.videoSource === 'existing') {
-        if (!data.videoPath) {
-          toast.error('Выберите видео')
-          return
-        }
-        videoPath = data.videoPath
-      } else if (data.videoSource === 'upload') {
-        if (!data.videoPath) {
-          toast.error('Загрузите видео')
-          return
-        }
-        videoPath = data.videoPath
-      }
 
       const response = await fetch('/api/lineups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...data,
-          youtubeId,
-          videoPath,
-          isUserGenerated: false, // Официальный лайнап
+          isUserGenerated: false,
         }),
       })
 
@@ -260,11 +146,6 @@ function AdminAddLineupContent() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   return (
@@ -410,153 +291,40 @@ function AdminAddLineupContent() {
                   </Select>
                 </div>
 
-                {/* Источник видео */}
+                {/* YouTube видео */}
                 <div className="space-y-4">
-                  <label className="text-sm font-medium">Видео *</label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant={videoSource === 'upload' ? 'cs2' : 'outline'}
-                      size="sm"
-                      onClick={() => setValue('videoSource', 'upload')}
-                    >
-                      <Upload className="w-4 h-4 mr-1" />
-                      Загрузить
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={videoSource === 'existing' ? 'cs2' : 'outline'}
-                      size="sm"
-                      onClick={() => setValue('videoSource', 'existing')}
-                    >
-                      <Video className="w-4 h-4 mr-1" />
-                      Из библиотеки
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={videoSource === 'youtube' ? 'cs2' : 'outline'}
-                      size="sm"
-                      onClick={() => setValue('videoSource', 'youtube')}
-                    >
-                      YouTube
-                    </Button>
+                  <label className="text-sm font-medium">YouTube видео *</label>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="YouTube ID (например: dQw4w9WgXcQ) или полная ссылка"
+                      {...register('youtubeId')}
+                      disabled={loading}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        // Extract ID from full URL
+                        const patterns = [
+                          /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/,
+                          /^([a-zA-Z0-9_-]{11})$/,
+                        ]
+                        for (const pattern of patterns) {
+                          const match = val.match(pattern)
+                          if (match) {
+                            setValue('youtubeId', match[1])
+                            break
+                          }
+                        }
+                      }}
+                    />
+                    {youtubeId && (
+                      <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                        <img
+                          src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
+                          alt="YouTube thumbnail"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
                   </div>
-
-                  {/* Загрузка нового видео */}
-                  {videoSource === 'upload' && (
-                    <div className="p-4 rounded-lg bg-cs2-light border-2 border-dashed border-gray-600">
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoUpload}
-                        disabled={uploading}
-                        className="hidden"
-                        id="video-upload"
-                      />
-                      <label
-                        htmlFor="video-upload"
-                        className="flex flex-col items-center justify-center cursor-pointer py-6"
-                      >
-                        {uploading ? (
-                          <>
-                            <Loader2 className="w-8 h-8 animate-spin text-cs2-accent mb-2" />
-                            <p className="text-sm text-muted-foreground">Загрузка...</p>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-8 h-8 text-muted-foreground mb-2" />
-                            <p className="text-sm text-muted-foreground">
-                              Нажмите для выбора видео
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              MP4, WebM, MKV, AVI, MOV (макс 500MB)
-                            </p>
-                          </>
-                        )}
-                      </label>
-                      {selectedVideo && videoSource === 'upload' && (
-                        <div className="flex items-center gap-2 mt-3 p-2 rounded bg-green-900/30 border border-green-700">
-                          <Check className="w-4 h-4 text-green-400" />
-                          <span className="text-sm text-green-400">Видео загружено</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Выбор из загруженных видео */}
-                  {videoSource === 'existing' && (
-                    <div className="space-y-3">
-                      {videoFiles.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-6">
-                          Нет загруженных видео. Загрузите первое видео во вкладке «Загрузить».
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
-                          {videoFiles.map((file) => (
-                            <div
-                              key={file.name}
-                              className={`relative group rounded-lg border-2 overflow-hidden cursor-pointer transition-colors ${
-                                selectedVideo === file.url
-                                  ? 'border-cs2-accent'
-                                  : 'border-gray-700 hover:border-gray-500'
-                              }`}
-                              onClick={() => {
-                                setSelectedVideo(file.url)
-                                setValue('videoPath', file.url)
-                              }}
-                            >
-                              <video
-                                src={file.url}
-                                className="w-full aspect-video object-cover"
-                                muted
-                              />
-                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Check className="w-6 h-6 text-white" />
-                              </div>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDeleteVideo(file.name)
-                                }}
-                                className="absolute top-1 right-1 p-1 rounded bg-red-600/80 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                              >
-                                <Trash2 className="w-3 h-3 text-white" />
-                              </button>
-                              <div className="p-1.5 bg-gray-900">
-                                <p className="text-xs text-white truncate" title={file.name}>
-                                  {file.name.length > 25 ? file.name.slice(0, 25) + '...' : file.name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {formatFileSize(file.size)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* YouTube */}
-                  {videoSource === 'youtube' && (
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="YouTube ID (например: dQw4w9WgXcQ)"
-                        {...register('youtubeId')}
-                        disabled={loading}
-                      />
-                      {youtubeId && (
-                        <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                          <img
-                            src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
-                            alt="YouTube thumbnail"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
 
                 {/* Кнопки */}
@@ -606,21 +374,12 @@ function AdminAddLineupContent() {
               )}
 
               {/* Видео превью */}
-              {videoSource === 'youtube' && youtubeId ? (
+              {youtubeId ? (
                 <div className="aspect-video rounded-lg overflow-hidden bg-black">
                   <img
                     src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
                     alt="Preview"
                     className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : selectedVideo ? (
-                <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                  <video
-                    src={selectedVideo}
-                    className="w-full h-full object-cover"
-                    controls
-                    muted
                   />
                 </div>
               ) : (
