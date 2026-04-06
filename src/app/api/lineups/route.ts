@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get('difficulty')
     const search = searchParams.get('search')
     const userGenerated = searchParams.get('userGenerated')
+    const userId = searchParams.get('userId')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const tactical = searchParams.get('tactical')
@@ -57,6 +58,10 @@ export async function GET(request: NextRequest) {
 
     if (difficulty && difficulty !== 'ALL') {
       where.difficulty = difficulty
+    }
+
+    if (userId) {
+      where.userId = userId
     }
 
     // Фильтрация для тактических и секретных лайнапов
@@ -137,6 +142,10 @@ export async function GET(request: NextRequest) {
           total,
           totalPages: Math.ceil(total / limit),
         },
+      },
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
       },
     })
   } catch (error) {

@@ -95,7 +95,8 @@ export default function AddPositionDialog({
     setPosition(null)
   }
 
-  const mapImageUrl = map.imageUrl || `/minimaps/${map.name}.png`
+  // Используем миникарту из папки minimaps
+  const minimapUrl = `/minimaps/${map.name}.png`
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -116,7 +117,7 @@ export default function AddPositionDialog({
               className="relative w-full aspect-square max-w-2xl mx-auto rounded-lg overflow-hidden border-2 border-gray-700 cursor-crosshair"
             >
               <Image
-                src={mapImageUrl}
+                src={minimapUrl}
                 alt={map.displayName}
                 fill
                 className="object-cover"

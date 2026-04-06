@@ -73,11 +73,10 @@ export default function MapPage() {
 
   const fetchMap = useCallback(async () => {
     try {
-      const response = await fetch('/api/maps')
+      const response = await fetch(`/api/maps/${mapName}`)
       const result = await response.json()
       if (result.success) {
-        const foundMap = result.data.find((m: MapType) => m.name === mapName)
-        setMap(foundMap)
+        setMap(result.data)
       }
     } catch (error) {
       console.error('Error fetching map:', error)
@@ -109,8 +108,10 @@ export default function MapPage() {
     )
   }
 
-  // Получаем изображение карты для мини-карты
-  const mapImageUrl = map.imageUrl || `/minimaps/${map.name}.png`
+  // URL миникарты для интерактивной карты
+  const minimapUrl = `/minimaps/${map.name}.png`
+  // URL превью карты для карточек (если есть)
+  const mapImageUrl = map.imageUrl
 
   return (
     <div className="container py-8">
@@ -195,7 +196,7 @@ export default function MapPage() {
           <div className="mb-8">
             {positions.length > 0 ? (
               <InteractiveMap
-                mapImage={mapImageUrl}
+                mapImage={minimapUrl}
                 mapName={map.displayName}
                 positions={positions}
                 onPositionClick={setSelectedPosition}
@@ -211,16 +212,14 @@ export default function MapPage() {
                     </Link>
                   </p>
                 </div>
-                {/* Фоновое изображение карты */}
-                {mapImageUrl && (
-                  <Image
-                    src={mapImageUrl}
-                    alt={`${map.displayName} map`}
-                    fill
-                    className="object-cover opacity-30"
-                    unoptimized
-                  />
-                )}
+                {/* Фоновое изображение миникарты */}
+                <Image
+                  src={minimapUrl}
+                  alt={`${map.displayName} map`}
+                  fill
+                  className="object-cover opacity-30"
+                  unoptimized
+                />
               </div>
             )}
           </div>

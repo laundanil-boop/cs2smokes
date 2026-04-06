@@ -111,9 +111,13 @@ model Lineup {
 
   @@index([mapId])
   @@index([grenadeType])
+  @@index([side])
+  @@index([difficulty])
   @@index([userId])
   @@index([positionId])
   @@index([moderationStatus])
+  @@index([mapId, grenadeType, side, difficulty])
+  @@index([mapId, moderationStatus])
   @@map("lineups")
 }
 

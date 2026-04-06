@@ -23,6 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Map as GameMap, LineupPosition } from '@/types'
+import Image from 'next/image'
 
 const lineupSchema = z.object({
   title: z.string().min(1, 'Название обязательно').max(100),
@@ -57,6 +58,7 @@ function UploadContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [youtubePreview, setYoutubePreview] = useState('')
+  const [selectedMap, setSelectedMap] = useState<GameMap | null>(null)
 
   const {
     register,
@@ -84,6 +86,9 @@ function UploadContent() {
   // Загрузка позиций при выборе карты
   useEffect(() => {
     if (selectedMapId) {
+      const selected = maps.find(m => m.id === selectedMapId)
+      setSelectedMap(selected || null)
+
       fetch(`/api/positions?mapId=${selectedMapId}`)
         .then(res => res.json())
         .then(result => {
@@ -94,8 +99,9 @@ function UploadContent() {
         .catch(console.error)
     } else {
       setPositions([])
+      setSelectedMap(null)
     }
-  }, [selectedMapId])
+  }, [selectedMapId, maps])
 
   // Установка предвыбранной позиции из URL параметра
   useEffect(() => {
@@ -509,6 +515,25 @@ function UploadContent() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Миникарта */}
+              {selectedMap ? (
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-gray-700 bg-gray-800">
+                  <Image
+                    src={`/minimaps/${selectedMap.name}.png`}
+                    alt={selectedMap.displayName}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="aspect-square rounded-lg bg-cs2-light flex items-center justify-center border border-gray-700">
+                  <p className="text-muted-foreground text-sm text-center px-4">
+                    Выберите карту для отображения миникарты
+                  </p>
+                </div>
+              )}
+
               {youtubePreview ? (
                 <div className="aspect-video rounded-lg overflow-hidden bg-black">
                   <img

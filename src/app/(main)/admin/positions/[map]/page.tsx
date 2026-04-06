@@ -476,7 +476,7 @@ export default function AdminMapPositionsPage() {
                       Лайнапов: {position.lineups?.length || 0}
                     </span>
                     <Link
-                      href={`/upload?positionId=${position.id}`}
+                      href={`/admin/add-lineup?positionId=${position.id}&mapId=${map.id}`}
                       className="text-cs2-accent hover:underline text-xs"
                     >
                       + Добавить
@@ -571,7 +571,7 @@ export default function AdminMapPositionsPage() {
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         position={positionToEdit}
-        mapImage={map.imageUrl || `/images/maps/${map.name}.jpg`}
+        mapImage={`/minimaps/${map.name}.png`}
         onSave={handleEditPosition}
       />
 

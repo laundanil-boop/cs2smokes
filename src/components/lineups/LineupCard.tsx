@@ -40,15 +40,15 @@ export function LineupCard({ lineup, showFavorite = false, onToggleFavorite }: L
             alt={lineup.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cs2-accent/20 to-cs2-darker">
-            <PlayCircle className="h-16 w-16 text-cs2-accent/50" />
+            <PlayCircle className="h-12 w-12 sm:h-16 sm:w-16 text-cs2-accent/50" />
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-cs2-darker/80 to-transparent" />
-        
+
         {/* Grenade type badge */}
         <div className={cn(
           'absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium text-white',
@@ -102,26 +102,26 @@ export function LineupCard({ lineup, showFavorite = false, onToggleFavorite }: L
         )}
       </div>
 
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         <Link href={`/lineups/${lineup.id}`}>
-          <h3 className="font-semibold text-lg line-clamp-1 group-hover:text-cs2-accent transition-colors">
+          <h3 className="font-semibold text-base sm:text-lg line-clamp-2 group-hover:text-cs2-accent transition-colors">
             {lineup.title}
           </h3>
         </Link>
 
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          <span>{lineup.map.displayName}</span>
+          <MapPin className="h-3 w-3 shrink-0" />
+          <span className="truncate">{lineup.map.displayName}</span>
         </div>
 
         {lineup.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
             {lineup.description}
           </p>
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-cs2-light">
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Eye className="h-3 w-3" />
               {lineup.views}
@@ -131,7 +131,7 @@ export function LineupCard({ lineup, showFavorite = false, onToggleFavorite }: L
               {lineup._count?.comments ?? 0}
             </span>
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground shrink-0">
             {timeAgo(new Date(lineup.createdAt))}
           </span>
         </div>

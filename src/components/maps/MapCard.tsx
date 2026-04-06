@@ -58,15 +58,16 @@ export function MapCard({ map, variant = 'default' }: MapCardProps) {
             alt={map.displayName}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-cs2-darker via-cs2-darker/50 to-transparent" />
-          
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h3 className="text-xl font-bold text-white group-hover:text-cs2-accent transition-colors">
+
+          <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
+            <h3 className="text-base sm:text-xl font-bold text-white group-hover:text-cs2-accent transition-colors line-clamp-2">
               {map.displayName}
             </h3>
-            <div className="flex items-center gap-2 mt-2 text-sm text-white/80">
-              <MapPin className="h-4 w-4" />
+            <div className="flex items-center gap-1 sm:gap-2 mt-1 sm:mt-2 text-xs sm:text-sm text-white/80">
+              <MapPin className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
               <span>{map._count?.lineups ?? 0} лайнапов</span>
             </div>
           </div>

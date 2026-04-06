@@ -51,15 +51,12 @@ function ProfileContent() {
 
         setUser(userResult.data)
 
-        // Fetch user's lineups
-        const lineupsResponse = await fetch('/api/lineups')
+        // Fetch user's lineups using userId filter
+        const lineupsResponse = await fetch(`/api/lineups?userId=${userResult.data.id}`)
         const lineupsResult = await lineupsResponse.json()
 
         if (lineupsResult.success) {
-          const userLineups = lineupsResult.data.lineups.filter(
-            (l: any) => l.userId === userResult.data.id
-          )
-          setMyLineups(userLineups)
+          setMyLineups(lineupsResult.data.lineups)
         }
       } catch (error) {
         console.error('Error fetching profile:', error)

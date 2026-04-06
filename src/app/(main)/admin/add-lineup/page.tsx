@@ -1,0 +1,653 @@
+'use client'
+
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { Loader2, Upload, Video, Trash2, Check, X, MapPin } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Map as GameMap, LineupPosition } from '@/types'
+import Image from 'next/image'
+import { useToast } from '@/components/ui/Toast'
+
+const lineupSchema = z.object({
+  title: z.string().min(1, 'Название обязательно').max(100),
+  description: z.string().max(500).optional(),
+  mapId: z.string().min(1, 'Выберите карту'),
+  positionId: z.string().optional(),
+  grenadeType: z.enum(['SMOKE', 'MOLOTOV', 'FLASH', 'HE']),
+  side: z.enum(['CT', 'T', 'BOTH']),
+  videoSource: z.enum(['upload', 'existing', 'youtube']),
+  youtubeId: z.string().optional(),
+  videoPath: z.string().optional(),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
+})
+
+type LineupForm = z.infer<typeof lineupSchema>
+
+interface VideoFile {
+  name: string
+  url: string
+  size: number
+  createdAt: string
+}
+
+export default function AdminAddLineupPage() {
+  return (
+    <Suspense fallback={<div className="container py-8 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-cs2-accent" /></div>}>
+      <AdminAddLineupContent />
+    </Suspense>
+  )
+}
+
+function AdminAddLineupContent() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const toast = useToast()
+  const preselectedPositionId = searchParams.get('positionId')
+  const preselectedMapId = searchParams.get('mapId')
+
+  const [maps, setMaps] = useState<GameMap[]>([])
+  const [positions, setPositions] = useState<LineupPosition[]>([])
+  const [loading, setLoading] = useState(false)
+  const [selectedMap, setSelectedMap] = useState<GameMap | null>(null)
+  const [videoFiles, setVideoFiles] = useState<VideoFile[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [selectedVideo, setSelectedVideo] = useState<string>('')
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<LineupForm>({
+    resolver: zodResolver(lineupSchema),
+    defaultValues: {
+      difficulty: 'MEDIUM',
+      side: 'T',
+      videoSource: 'upload',
+    },
+  })
+
+  const selectedMapId = watch('mapId')
+  const videoSource = watch('videoSource')
+  const youtubeId = watch('youtubeId')
+
+  // Загрузка карт
+  useEffect(() => {
+    fetch('/api/maps')
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) setMaps(result.data)
+      })
+      .catch(console.error)
+  }, [])
+
+  // Загрузка списка видео
+  useEffect(() => {
+    fetch('/api/admin/videos')
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) setVideoFiles(result.data)
+      })
+      .catch(console.error)
+  }, [])
+
+  // Загрузка позиций при выборе карты
+  useEffect(() => {
+    if (selectedMapId) {
+      const selected = maps.find(m => m.id === selectedMapId)
+      setSelectedMap(selected || null)
+
+      fetch(`/api/positions?mapId=${selectedMapId}`)
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) setPositions(result.data)
+        })
+        .catch(console.error)
+    } else {
+      setPositions([])
+      setSelectedMap(null)
+    }
+  }, [selectedMapId, maps])
+
+  // Предвыбор карты и позиции из URL
+  useEffect(() => {
+    if (preselectedMapId && maps.length > 0) {
+      setValue('mapId', preselectedMapId)
+    }
+  }, [preselectedMapId, maps, setValue])
+
+  useEffect(() => {
+    if (preselectedPositionId) {
+      setValue('positionId', preselectedPositionId)
+    }
+  }, [preselectedPositionId, setValue])
+
+  // Загрузка видео файла
+  const handleVideoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setUploadProgress(0)
+
+    try {
+      const formData = new FormData()
+      formData.append('video', file)
+
+      const response = await fetch('/api/admin/videos/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success('Видео загружено')
+        setSelectedVideo(result.data.url)
+        setValue('videoPath', result.data.url)
+
+        // Обновляем список
+        const listRes = await fetch('/api/admin/videos')
+        const listResult = await listRes.json()
+        if (listResult.success) setVideoFiles(listResult.data)
+      } else {
+        toast.error(result.error || 'Ошибка загрузки')
+      }
+    } catch (error) {
+      toast.error('Ошибка при загрузке видео')
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
+  }, [setValue, toast])
+
+  // Удаление видео
+  const handleDeleteVideo = useCallback(async (fileName: string) => {
+    if (!confirm('Удалить это видео?')) return
+
+    try {
+      const response = await fetch(`/api/admin/videos?file=${encodeURIComponent(fileName)}`, {
+        method: 'DELETE',
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        toast.success('Видео удалено')
+        setVideoFiles(prev => prev.filter(f => f.name !== fileName))
+        if (selectedVideo.includes(fileName)) {
+          setSelectedVideo('')
+          setValue('videoPath', '')
+        }
+      } else {
+        toast.error(result.error || 'Ошибка удаления')
+      }
+    } catch (error) {
+      toast.error('Ошибка при удалении видео')
+    }
+  }, [selectedVideo, setValue, toast])
+
+  const onSubmit = async (data: LineupForm) => {
+    try {
+      setLoading(true)
+
+      // Определяем источник видео
+      let youtubeId: string | undefined
+      let videoPath: string | undefined
+
+      if (data.videoSource === 'youtube') {
+        if (!data.youtubeId) {
+          toast.error('Укажите YouTube ID')
+          return
+        }
+        youtubeId = data.youtubeId
+      } else if (data.videoSource === 'existing') {
+        if (!data.videoPath) {
+          toast.error('Выберите видео')
+          return
+        }
+        videoPath = data.videoPath
+      } else if (data.videoSource === 'upload') {
+        if (!data.videoPath) {
+          toast.error('Загрузите видео')
+          return
+        }
+        videoPath = data.videoPath
+      }
+
+      const response = await fetch('/api/lineups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          youtubeId,
+          videoPath,
+          isUserGenerated: false, // Официальный лайнап
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success('Лайнап создан')
+        router.push(`/lineups/${result.data.id}`)
+      } else {
+        toast.error(result.error || 'Ошибка при создании')
+      }
+    } catch (err) {
+      toast.error('Произошла ошибка')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  return (
+    <div className="container py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold tracking-tight">Добавить официальный лайнап</h1>
+        <p className="text-muted-foreground mt-2">
+          Создание официального лайнапа с видео с компьютера
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Форма */}
+        <div className="lg:col-span-2">
+          <Card className="bg-cs2-gray border-cs2-light">
+            <CardHeader>
+              <CardTitle>Информация о лайнапе</CardTitle>
+              <CardDescription>Заполните данные</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Название */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Название *</label>
+                  <Input
+                    placeholder="Smoke на A Main"
+                    {...register('title')}
+                    disabled={loading}
+                  />
+                  {errors.title && (
+                    <p className="text-sm text-destructive">{errors.title.message}</p>
+                  )}
+                </div>
+
+                {/* Описание */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Описание</label>
+                  <Textarea
+                    placeholder="Краткое описание лайнапа"
+                    {...register('description')}
+                    disabled={loading}
+                    rows={2}
+                  />
+                </div>
+
+                {/* Карта и позиция */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Карта *</label>
+                    <Select
+                      onValueChange={(value) => setValue('mapId', value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите карту" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {maps.map((map) => (
+                          <SelectItem key={map.id} value={map.id}>
+                            {map.displayName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.mapId && (
+                      <p className="text-sm text-destructive">{errors.mapId.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Позиция</label>
+                    <Select
+                      onValueChange={(value) => setValue('positionId', value)}
+                      disabled={loading || !selectedMapId || positions.length === 0}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите позицию" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {positions.map((pos) => (
+                          <SelectItem key={pos.id} value={pos.id}>
+                            {pos.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Тип гранаты и сторона */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Тип гранаты *</label>
+                    <Select
+                      onValueChange={(value: any) => setValue('grenadeType', value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите тип" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SMOKE">Smoke</SelectItem>
+                        <SelectItem value="MOLOTOV">Molotov</SelectItem>
+                        <SelectItem value="FLASH">Flash</SelectItem>
+                        <SelectItem value="HE">HE Grenade</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Сторона *</label>
+                    <Select
+                      onValueChange={(value: any) => setValue('side', value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Выберите сторону" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="T">Terrorist</SelectItem>
+                        <SelectItem value="CT">Counter-Terrorist</SelectItem>
+                        <SelectItem value="BOTH">Обе стороны</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Сложность */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Сложность *</label>
+                  <Select
+                    onValueChange={(value: any) => setValue('difficulty', value)}
+                    disabled={loading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите сложность" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EASY">Легко</SelectItem>
+                      <SelectItem value="MEDIUM">Средне</SelectItem>
+                      <SelectItem value="HARD">Сложно</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Источник видео */}
+                <div className="space-y-4">
+                  <label className="text-sm font-medium">Видео *</label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={videoSource === 'upload' ? 'cs2' : 'outline'}
+                      size="sm"
+                      onClick={() => setValue('videoSource', 'upload')}
+                    >
+                      <Upload className="w-4 h-4 mr-1" />
+                      Загрузить
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={videoSource === 'existing' ? 'cs2' : 'outline'}
+                      size="sm"
+                      onClick={() => setValue('videoSource', 'existing')}
+                    >
+                      <Video className="w-4 h-4 mr-1" />
+                      Из библиотеки
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={videoSource === 'youtube' ? 'cs2' : 'outline'}
+                      size="sm"
+                      onClick={() => setValue('videoSource', 'youtube')}
+                    >
+                      YouTube
+                    </Button>
+                  </div>
+
+                  {/* Загрузка нового видео */}
+                  {videoSource === 'upload' && (
+                    <div className="p-4 rounded-lg bg-cs2-light border-2 border-dashed border-gray-600">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoUpload}
+                        disabled={uploading}
+                        className="hidden"
+                        id="video-upload"
+                      />
+                      <label
+                        htmlFor="video-upload"
+                        className="flex flex-col items-center justify-center cursor-pointer py-6"
+                      >
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-8 h-8 animate-spin text-cs2-accent mb-2" />
+                            <p className="text-sm text-muted-foreground">Загрузка...</p>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-8 h-8 text-muted-foreground mb-2" />
+                            <p className="text-sm text-muted-foreground">
+                              Нажмите для выбора видео
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              MP4, WebM, MKV, AVI, MOV (макс 500MB)
+                            </p>
+                          </>
+                        )}
+                      </label>
+                      {selectedVideo && videoSource === 'upload' && (
+                        <div className="flex items-center gap-2 mt-3 p-2 rounded bg-green-900/30 border border-green-700">
+                          <Check className="w-4 h-4 text-green-400" />
+                          <span className="text-sm text-green-400">Видео загружено</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Выбор из загруженных видео */}
+                  {videoSource === 'existing' && (
+                    <div className="space-y-3">
+                      {videoFiles.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">
+                          Нет загруженных видео. Загрузите первое видео во вкладке «Загрузить».
+                        </p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto">
+                          {videoFiles.map((file) => (
+                            <div
+                              key={file.name}
+                              className={`relative group rounded-lg border-2 overflow-hidden cursor-pointer transition-colors ${
+                                selectedVideo === file.url
+                                  ? 'border-cs2-accent'
+                                  : 'border-gray-700 hover:border-gray-500'
+                              }`}
+                              onClick={() => {
+                                setSelectedVideo(file.url)
+                                setValue('videoPath', file.url)
+                              }}
+                            >
+                              <video
+                                src={file.url}
+                                className="w-full aspect-video object-cover"
+                                muted
+                              />
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Check className="w-6 h-6 text-white" />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteVideo(file.name)
+                                }}
+                                className="absolute top-1 right-1 p-1 rounded bg-red-600/80 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="w-3 h-3 text-white" />
+                              </button>
+                              <div className="p-1.5 bg-gray-900">
+                                <p className="text-xs text-white truncate" title={file.name}>
+                                  {file.name.length > 25 ? file.name.slice(0, 25) + '...' : file.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatFileSize(file.size)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* YouTube */}
+                  {videoSource === 'youtube' && (
+                    <div className="space-y-2">
+                      <Input
+                        placeholder="YouTube ID (например: dQw4w9WgXcQ)"
+                        {...register('youtubeId')}
+                        disabled={loading}
+                      />
+                      {youtubeId && (
+                        <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                          <img
+                            src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
+                            alt="YouTube thumbnail"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Кнопки */}
+                <div className="flex gap-4">
+                  <Button type="submit" variant="cs2" className="flex-1" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Создать лайнап
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => router.back()}
+                    disabled={loading}
+                  >
+                    Отмена
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar с превью */}
+        <div className="lg:col-span-1">
+          <Card className="bg-cs2-gray border-cs2-light sticky top-24">
+            <CardHeader>
+              <CardTitle>Предпросмотр</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Миникарта */}
+              {selectedMap ? (
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden border border-gray-700 bg-gray-800">
+                  <Image
+                    src={`/minimaps/${selectedMap.name}.png`}
+                    alt={selectedMap.displayName}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                </div>
+              ) : (
+                <div className="aspect-square rounded-lg bg-cs2-light flex items-center justify-center border border-gray-700">
+                  <p className="text-muted-foreground text-sm text-center px-4">
+                    Выберите карту
+                  </p>
+                </div>
+              )}
+
+              {/* Видео превью */}
+              {videoSource === 'youtube' && youtubeId ? (
+                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                  <img
+                    src={`https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : selectedVideo ? (
+                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                  <video
+                    src={selectedVideo}
+                    className="w-full h-full object-cover"
+                    controls
+                    muted
+                  />
+                </div>
+              ) : (
+                <div className="aspect-video rounded-lg bg-cs2-light flex items-center justify-center">
+                  <Video className="w-8 h-8 text-muted-foreground" />
+                </div>
+              )}
+
+              {/* Инфо */}
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Название:</span>
+                  <p className="font-medium">{watch('title') || '—'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Тип:</span>
+                  <p className="font-medium">{watch('grenadeType') || '—'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Сложность:</span>
+                  <p className="font-medium">{watch('difficulty') || '—'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}

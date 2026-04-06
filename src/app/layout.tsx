@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Footer } from '@/components/layout/Footer'
+import CookieBanner from '@/components/layout/CookieBanner'
 import dynamic from 'next/dynamic'
 import { ToastProvider } from '@/components/ui/Toast'
 import { UserProvider } from '@/contexts/UserContext'
@@ -9,8 +10,17 @@ import { UserProvider } from '@/contexts/UserContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'CS2Smokes - Гранатные лайнапы для Counter-Strike 2',
-  description: 'Лучшая коллекция гранатных лайнапов для CS2.',
+  title: {
+    default: 'CS2Smokes',
+    template: '%s | CS2Smokes',
+  },
+  description: 'Гранатные лайнапы для Counter-Strike 2',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
+  manifest: '/manifest.json',
+  themeColor: '#1a1a1a',
 }
 
 const Header = dynamic(() => import('@/components/layout/Header'), {
@@ -32,6 +42,7 @@ export default function RootLayout({
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
+            <CookieBanner />
           </UserProvider>
         </ToastProvider>
       </body>

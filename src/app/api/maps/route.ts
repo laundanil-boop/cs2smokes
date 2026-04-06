@@ -15,6 +15,10 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       data: maps,
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      },
     })
   } catch (error) {
     console.error('Get maps error:', error)

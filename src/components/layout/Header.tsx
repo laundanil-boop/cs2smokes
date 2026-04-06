@@ -121,6 +121,16 @@ export function Header() {
                 </Link>
               )}
 
+              {/* Кнопка добавления официального лайнапа */}
+              {(user.role === 'admin' || user.role === 'root') && (
+                <Link href="/admin/add-lineup">
+                  <Button variant="outline" size="sm" className="hidden lg:flex gap-2 h-9">
+                    <PlusCircle className="h-4 w-4" />
+                    Добавить лайнап
+                  </Button>
+                </Link>
+              )}
+
               {/* Кнопка Media */}
               {user.role === 'media' && (
                 <Link href="/media">
@@ -215,6 +225,16 @@ export function Header() {
                     >
                       <Settings className="h-5 w-5" />
                       ADMIN
+                    </Link>
+                  )}
+                  {(user.role === 'admin' || user.role === 'root') && (
+                    <Link
+                      href="/admin/add-lineup"
+                      className="px-4 py-3 text-sm font-medium text-cs2-accent hover:text-cs2-accent/80 hover:bg-cs2-light/50 transition-colors flex items-center gap-3 border-l-2 border-transparent hover:border-cs2-accent"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <PlusCircle className="h-5 w-5" />
+                      Добавить лайнап
                     </Link>
                   )}
                   {user.role === 'media' && (

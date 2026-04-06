@@ -18,6 +18,12 @@ const nextConfig = {
   },
   // Для production на Vercel
   productionBrowserSourceMaps: false,
+  // Разрешаем большие файлы для видео
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '500mb',
+    },
+  },
 }
 
 module.exports = nextConfig
