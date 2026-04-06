@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   },
   manifest: '/manifest.json',
   themeColor: '#1a1a1a',
+  openGraph: {
+    type: 'website',
+    locale: 'ru_RU',
+  },
 }
 
 const Header = dynamic(() => import('@/components/layout/Header'), {
