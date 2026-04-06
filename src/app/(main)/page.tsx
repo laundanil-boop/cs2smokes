@@ -87,6 +87,7 @@ async function getStats() {
       prisma.map.count(),
       prisma.user.count(),
     ])
+    console.log(`Stats: ${lineupsCount} lineups, ${mapsCount} maps, ${usersCount} users`)
     return { lineupsCount, mapsCount, usersCount }
   } catch (error) {
     console.error('Error fetching stats:', error)

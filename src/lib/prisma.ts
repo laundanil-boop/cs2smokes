@@ -13,4 +13,11 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   },
 })
 
+// Disconnect on signal for serverless
+if (process.env.NODE_ENV === 'production') {
+  process.on('SIGTERM', async () => {
+    await prisma.$disconnect()
+  })
+}
+
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
