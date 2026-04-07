@@ -2,12 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, Menu, X, LogOut, PlusCircle, Heart, Settings, Crown, Target, Zap, User } from 'lucide-react'
+import { Menu, X, PlusCircle, Heart, Settings, Crown, Target, Zap, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { useRouter } from 'next/navigation'
 import { useUser } from '@/contexts/UserContext'
 
 interface User {
@@ -23,10 +21,8 @@ interface User {
 
 export function Header() {
   const pathname = usePathname()
-  const router = useRouter()
   const { user, loading, refreshUser } = useUser()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     // Подписка на событие кастомного входа/выхода
@@ -45,14 +41,6 @@ export function Header() {
     { name: 'Загрузить', href: '/upload', protected: true },
     { name: 'Избранное', href: '/favorites', protected: true },
   ]
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setSearchQuery('')
-    }
-  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-cs2-light bg-cs2-darker/95 backdrop-blur supports-[backdrop-filter]:bg-cs2-darker/80">
@@ -94,18 +82,7 @@ export function Header() {
         </div>
 
         <div className="flex-1 flex items-center justify-center px-2 sm:px-4 ml-2 sm:ml-4">
-          <form onSubmit={handleSearch} className="w-full max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Поиск..."
-                className="pl-10 bg-cs2-light border-cs2-gray text-sm h-9 sm:h-10"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </form>
+          {/* Поиск удалён */}
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">

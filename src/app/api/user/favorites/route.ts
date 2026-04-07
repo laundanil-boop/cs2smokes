@@ -111,8 +111,8 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const { searchParams } = new URL(request.url)
-    const lineupId = searchParams.get('lineupId')
+    const body = await request.json()
+    const { lineupId } = body
 
     if (!lineupId) {
       return NextResponse.json(

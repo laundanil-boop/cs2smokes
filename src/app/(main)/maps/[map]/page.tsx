@@ -32,7 +32,6 @@ export default function MapPage() {
   const [grenadeType, setGrenadeType] = useState<'ALL' | 'SMOKE' | 'MOLOTOV' | 'FLASH' | 'HE'>('ALL')
   const [side, setSide] = useState<'ALL' | 'CT' | 'T' | 'BOTH'>('ALL')
   const [difficulty, setDifficulty] = useState<'ALL' | 'EASY' | 'MEDIUM' | 'HARD'>('ALL')
-  const [search, setSearch] = useState('')
 
   const fetchPositions = useCallback(async () => {
     try {
@@ -55,7 +54,6 @@ export default function MapPage() {
         ...(grenadeType !== 'ALL' && { grenadeType }),
         ...(side !== 'ALL' && { side }),
         ...(difficulty !== 'ALL' && { difficulty }),
-        ...(search && { search }),
       })
 
       const response = await fetch(`/api/lineups?${queryParams}`)
@@ -69,7 +67,7 @@ export default function MapPage() {
     } finally {
       setLoading(false)
     }
-  }, [mapName, grenadeType, side, difficulty, search])
+  }, [mapName, grenadeType, side, difficulty])
 
   const fetchMap = useCallback(async () => {
     try {
@@ -93,7 +91,6 @@ export default function MapPage() {
     setGrenadeType('ALL')
     setSide('ALL')
     setDifficulty('ALL')
-    setSearch('')
   }
 
   const handleLineupClick = (lineup: Lineup) => {
@@ -179,11 +176,9 @@ export default function MapPage() {
             grenadeType={grenadeType}
             side={side}
             difficulty={difficulty}
-            search={search}
             onGrenadeTypeChange={setGrenadeType}
             onSideChange={setSide}
             onDifficultyChange={setDifficulty}
-            onSearchChange={setSearch}
             onReset={handleReset}
           />
         )}
@@ -318,18 +313,11 @@ export default function MapPage() {
 
       {/* Панель позиции */}
       {selectedPosition && (
-        <>
-          <LineupPositionPanel
-            position={selectedPosition}
-            onClose={() => setSelectedPosition(null)}
-            onLineupClick={handleLineupClick}
-          />
-          {/* Затемнение фона */}
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={() => setSelectedPosition(null)}
-          />
-        </>
+        <LineupPositionPanel
+          position={selectedPosition}
+          onClose={() => setSelectedPosition(null)}
+          onLineupClick={handleLineupClick}
+        />
       )}
     </div>
   )

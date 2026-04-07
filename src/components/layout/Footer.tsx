@@ -5,7 +5,7 @@ export function Footer() {
   return (
     <footer className="border-t border-cs2-light bg-cs2-darker">
       <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cs2-accent">
@@ -29,73 +29,6 @@ export function Footer() {
                 <Send className="h-5 w-5" />
               </a>
             </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Карты</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/maps/mirage" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Mirage
-                </Link>
-              </li>
-              <li>
-                <Link href="/maps/dust2" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Dust II
-                </Link>
-              </li>
-              <li>
-                <Link href="/maps/inferno" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Inferno
-                </Link>
-              </li>
-              <li>
-                <Link href="/maps/nuke" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Nuke
-                </Link>
-              </li>
-              <li>
-                <Link href="/maps/overpass" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Overpass
-                </Link>
-              </li>
-              <li>
-                <Link href="/maps/ancient" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Ancient
-                </Link>
-              </li>
-              <li>
-                <Link href="/maps/anubis" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Anubis
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className="font-semibold mb-4">Типы гранат</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/search?grenadeType=SMOKE" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Smoke Grenades
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?grenadeType=MOLOTOV" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Molotovs
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?grenadeType=FLASH" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  Flashbangs
-                </Link>
-              </li>
-              <li>
-                <Link href="/search?grenadeType=HE" className="text-muted-foreground hover:text-cs2-accent transition-colors">
-                  HE Grenades
-                </Link>
-              </li>
-            </ul>
           </div>
 
           <div>

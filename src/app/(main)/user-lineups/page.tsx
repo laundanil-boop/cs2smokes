@@ -24,7 +24,6 @@ function UserLineupsContent() {
   )
   const [side, setSide] = useState<SideFilter>('ALL')
   const [difficulty, setDifficulty] = useState<DifficultyFilter>('ALL')
-  const [search, setSearch] = useState('')
 
   const fetchData = useCallback(async () => {
     try {
@@ -34,7 +33,6 @@ function UserLineupsContent() {
         ...(grenadeType !== 'ALL' && { grenadeType }),
         ...(side !== 'ALL' && { side }),
         ...(difficulty !== 'ALL' && { difficulty }),
-        ...(search && { search }),
       })
 
       const response = await fetch(`/api/lineups?${queryParams}`)
@@ -48,7 +46,7 @@ function UserLineupsContent() {
     } finally {
       setLoading(false)
     }
-  }, [grenadeType, side, difficulty, search])
+  }, [grenadeType, side, difficulty])
 
   const fetchFavorites = useCallback(async () => {
     try {
@@ -98,14 +96,12 @@ function UserLineupsContent() {
     setGrenadeType('ALL')
     setSide('ALL')
     setDifficulty('ALL')
-    setSearch('')
     router.push('/user-lineups')
   }
 
   const updateFilters = () => {
     const params = new URLSearchParams()
     params.set('userGenerated', 'true')
-    if (search) params.set('q', search)
     if (grenadeType !== 'ALL') params.set('grenadeType', grenadeType)
     if (side !== 'ALL') params.set('side', side)
     if (difficulty !== 'ALL') params.set('difficulty', difficulty)
@@ -133,7 +129,6 @@ function UserLineupsContent() {
         grenadeType={grenadeType}
         side={side}
         difficulty={difficulty}
-        search={search}
         onGrenadeTypeChange={(value) => {
           setGrenadeType(value)
           setTimeout(updateFilters, 0)
@@ -145,12 +140,6 @@ function UserLineupsContent() {
         onDifficultyChange={(value) => {
           setDifficulty(value)
           setTimeout(updateFilters, 0)
-        }}
-        onSearchChange={(value) => {
-          setSearch(value)
-          if (!value) {
-            router.push('/user-lineups')
-          }
         }}
         onReset={handleReset}
       />
